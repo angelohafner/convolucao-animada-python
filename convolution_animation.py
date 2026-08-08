@@ -151,6 +151,21 @@ def calculate_bode_response(
     return magnitude_db, phase_deg
 
 
+def build_frequency_colors(multipliers: tuple[float, ...]) -> NDArray[np.float64]:
+    if not multipliers:
+        raise ValueError("multipliers must not be empty")
+    normalized = np.asarray(multipliers, dtype=float)
+    if np.any(~np.isfinite(normalized)):
+        raise ValueError("multipliers must be finite")
+    minimum = float(np.min(normalized))
+    maximum = float(np.max(normalized))
+    if maximum == minimum:
+        positions = np.full(normalized.shape, 0.5, dtype=float)
+    else:
+        positions = (normalized - minimum) / (maximum - minimum)
+    return plt.get_cmap("jet")(positions)
+
+
 def build_time_axis(config: AnimationConfig) -> FloatArray:
     sample_count = int(round((config.end_time - config.start_time) / config.dt)) + 1
     return np.linspace(config.start_time, config.end_time, sample_count, dtype=float)
@@ -393,7 +408,7 @@ def save_sine_sequence_figure(
 ) -> Path:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     figure, axis = plt.subplots(figsize=(14.0, 5.0), constrained_layout=True)
-    colors = plt.get_cmap("viridis")(np.linspace(0.1, 0.9, len(sequence.cases)))
+    colors = build_frequency_colors(sequence.multipliers)
     outputs = [case.result.output for case in sequence.cases]
     axis.set_xlim(sequence.cases[0].result.time[0], sequence.cases[0].result.time[-1])
     axis.set_ylim(*_axis_limits(*outputs))
@@ -409,7 +424,7 @@ def save_sine_sequence_figure(
     axis.set_ylabel("Amplitude")
     axis.set_title("Respostas no dominio do tempo para varias frequencias")
     axis.grid(True, alpha=0.3)
-    axis.legend(loc="best")
+    axis.legend(loc="upper right")
     figure.savefig(output_path, dpi=150)
     plt.close(figure)
     return output_path
@@ -425,7 +440,7 @@ def create_sine_sequence_animation(
     output_path.parent.mkdir(parents=True, exist_ok=True)
     time = sequence.cases[0].result.time
     frame_indices = select_frame_indices(time.size, config.frame_stride)
-    colors = plt.get_cmap("viridis")(np.linspace(0.1, 0.9, len(sequence.cases)))
+    colors = build_frequency_colors(sequence.multipliers)
     figure, (input_axis, output_axis, bode_axis) = plt.subplots(
         3, 1, figsize=(config.figure_width, config.figure_height + 2.0), constrained_layout=True
     )
@@ -449,7 +464,7 @@ def create_sine_sequence_animation(
     output_axis.set_ylabel("Amplitude")
     output_axis.set_title("Respostas sobrepostas no dominio do tempo")
     output_axis.grid(True, alpha=0.3)
-    output_axis.legend(loc="best")
+    output_axis.legend(loc="upper right")
     reference_frequency = sequence.cases[0].result.reference_frequency
     bode_frequencies = np.logspace(
         np.log10(max(reference_frequency * 0.1, 0.01)),
@@ -462,17 +477,18 @@ def create_sine_sequence_animation(
         config.natural_frequency,
     )
     bode_axis_phase = bode_axis.twinx()
-    bode_axis.semilogx(bode_frequencies, bode_magnitude, color="#444444", linewidth=1.5, label="Magnitude teorica")
-    bode_axis_phase.semilogx(bode_frequencies, bode_phase, color="#999999", linestyle="--", linewidth=1.3, label="Fase teorica")
+    bode_axis.semilogx(bode_frequencies, bode_magnitude, color="gray", linewidth=1.5, label="Magnitude teorica")
+    bode_axis_phase.semilogx(bode_frequencies, bode_phase, color="gray", linestyle="--", linewidth=1.3, label="Fase teorica")
     bode_axis.set_xlabel(r"$\omega$ (rad/s)")
     bode_axis.set_ylabel("Magnitude (dB)")
     bode_axis_phase.set_ylabel("Fase (graus)")
     bode_axis.set_title("Diagrama de Bode e pontos das senoides")
     bode_axis.grid(True, which="both", alpha=0.3)
     bode_axis.set_xlim(bode_frequencies[0], bode_frequencies[-1])
-    bode_magnitude_points = bode_axis.scatter([], [], s=48, label="Pontos simulados", zorder=4)
-    bode_phase_points = bode_axis_phase.scatter([], [], s=48, zorder=4)
-    bode_axis.legend(loc="best")
+    bode_magnitude_points = bode_axis.scatter([], [], s=96, label="Pontos simulados", zorder=4)
+    bode_phase_points = bode_axis_phase.scatter([], [], s=96, zorder=4)
+    bode_axis.legend(loc="upper right")
+    bode_axis_phase.legend(loc="upper right")
     status_text = output_axis.text(0.02, 0.95, "", transform=output_axis.transAxes, verticalalignment="top")
     upper_status = input_axis.text(0.02, 0.95, "", transform=input_axis.transAxes, verticalalignment="top")
     product_fill = None

@@ -237,7 +237,10 @@ fase e proximidade da ressonancia. No painel superior sao mostrados a entrada,
 inferior, a resposta atual e as respostas das senoides anteriores.
 O MP4 tambem inclui um terceiro painel com o diagrama de Bode completo. Cada
 senoide acrescenta pontos scatter de magnitude e fase nas suas frequencias, e
-as curvas teoricas permanecem visiveis para comparacao.
+as curvas teoricas permanecem visiveis para comparacao. As cores usam o
+colormap `jet` proporcional a frequencia e sao compartilhadas entre entrada,
+resposta temporal e pontos do Bode. As curvas teoricas do Bode sao cinza e os
+marcadores scatter usam tamanho 96.
 
 ## GitHub
 

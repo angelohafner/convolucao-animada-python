@@ -4,6 +4,7 @@ from pathlib import Path
 
 import convolution_animation
 import matplotlib.animation as mpl_animation
+import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
@@ -29,6 +30,7 @@ from convolution_animation import (
     build_time_axis,
     calculate_default_case,
     calculate_bode_response,
+    build_frequency_colors,
     calculate_sine_sequence,
     compute_convolution,
     create_animation,
@@ -143,6 +145,13 @@ def test_bode_response_matches_second_order_transfer_function() -> None:
     )
     assert magnitude_db[0] == pytest.approx(20.0 * np.log10(1.0 / 0.2), abs=1e-6)
     assert phase_deg[0] == pytest.approx(-90.0, abs=1e-6)
+
+
+def test_frequency_colors_use_jet_and_match_frequency_order() -> None:
+    colors = build_frequency_colors((0.2, 0.6, 1.0, 1.8))
+    assert colors.shape == (4, 4)
+    assert np.allclose(colors[0], plt.get_cmap("jet")(0.0))
+    assert np.allclose(colors[-1], plt.get_cmap("jet")(1.0))
 
 
 def test_unit_ramp_is_causal() -> None:
