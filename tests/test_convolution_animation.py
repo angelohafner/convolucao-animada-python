@@ -19,12 +19,22 @@ from transfer_functions.second_order_underdamped import (
 
 from convolution_animation import (
     AnimationConfig,
+    BATCH_INPUT_NAMES,
+    RESONANCE_SINE_INPUT_NAME,
+    SINE_INPUT_NAMES,
+    build_input_plot_representation,
+    build_plot_scale,
+    build_shared_sine_plot_scale,
     analytical_step_response,
     build_time_axis,
     calculate_default_case,
+    calculate_sine_sequence,
     compute_convolution,
     create_animation,
+    generate_all_outputs,
     generate_outputs,
+    generate_sine_sequence,
+    parse_sine_multipliers,
     impulse_function,
     input_function,
     save_comparison_figure,
@@ -75,6 +85,51 @@ def test_unit_impulse_input_has_unit_area() -> None:
 
     np.testing.assert_array_equal(signal, np.array([0.0, 10.0, 0.0]))
     assert np.sum(signal) * dt == pytest.approx(1.0)
+
+
+def test_sine_sequence_preserves_frequency_order() -> None:
+    sequence = calculate_sine_sequence(
+        AnimationConfig(start_time=-1.0, end_time=2.0, dt=0.02),
+        (0.7, 1.0, 1.3),
+    )
+    assert sequence.multipliers == (0.7, 1.0, 1.3)
+    assert [case.multiplier for case in sequence.cases] == [0.7, 1.0, 1.3]
+    assert [case.input_name for case in sequence.cases] == [
+        "sine_0_7_resonance",
+        "sine_1_0_resonance",
+        "sine_1_3_resonance",
+    ]
+
+
+@pytest.mark.parametrize("multipliers", [(), (0.0,), (-1.0,), (float("nan"),)])
+def test_sine_sequence_rejects_invalid_multipliers(
+    multipliers: tuple[float, ...],
+) -> None:
+    with pytest.raises(ValueError):
+        calculate_sine_sequence(AnimationConfig(), multipliers)
+
+
+def test_sine_sequence_generates_overlay_outputs(tmp_path: Path) -> None:
+    config = AnimationConfig(
+        start_time=-0.5,
+        end_time=1.0,
+        dt=0.05,
+        frame_stride=5,
+        output_dir=tmp_path,
+    )
+    mp4_path, png_path, sequence = generate_sine_sequence(config, (0.8, 1.0))
+    assert len(sequence.cases) == 2
+    assert mp4_path.exists() and mp4_path.stat().st_size > 0
+    assert png_path.exists() and png_path.stat().st_size > 0
+
+
+def test_parse_sine_multipliers_accepts_comma_separated_values() -> None:
+    assert parse_sine_multipliers("0.8, 1.0,1.2") == (0.8, 1.0, 1.2)
+
+
+def test_parse_sine_multipliers_rejects_malformed_values() -> None:
+    with pytest.raises(ValueError):
+        parse_sine_multipliers("0.8,abc")
 
 
 def test_unit_ramp_is_causal() -> None:
@@ -260,6 +315,142 @@ def test_unknown_input_name_is_rejected_during_calculation() -> None:
 
     with pytest.raises(ValueError, match="Unknown input_name"):
         calculate_default_case(config)
+
+
+def test_unit_impulse_is_drawn_as_unit_height_arrow() -> None:
+    result = calculate_default_case(
+        AnimationConfig(start_time=-0.1, end_time=0.1, dt=0.1, input_name="unit_impulse")
+    )
+
+    representation = build_input_plot_representation(result)
+
+    np.testing.assert_array_equal(
+        representation.display_signal,
+        np.zeros_like(result.input_signal),
+    )
+    assert representation.show_unit_impulse_arrow is True
+    assert representation.arrow_x == pytest.approx(0.0)
+    assert representation.arrow_y_start == pytest.approx(0.0)
+    assert representation.arrow_y_end == pytest.approx(1.0)
+
+
+def test_non_impulse_input_uses_actual_signal_for_plot() -> None:
+    result = calculate_default_case(
+        AnimationConfig(start_time=-0.1, end_time=0.1, dt=0.1, input_name="unit_step")
+    )
+
+    representation = build_input_plot_representation(result)
+
+    np.testing.assert_array_equal(representation.display_signal, result.input_signal)
+    assert representation.show_unit_impulse_arrow is False
+
+
+def test_batch_input_names_follow_requested_order() -> None:
+    assert BATCH_INPUT_NAMES == (
+        "unit_impulse",
+        "unit_step",
+        "unit_ramp",
+        "sine_0_7_resonance",
+        "sine_0_8_resonance",
+        "sine_0_9_resonance",
+        "sine_1_0_resonance",
+        "sine_1_1_resonance",
+        "sine_1_2_resonance",
+        "sine_1_3_resonance",
+    )
+
+
+def test_generate_all_outputs_uses_ordered_case_directories(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    observed_configs: list[AnimationConfig] = []
+    observed_plot_scales: list[object] = []
+
+    def fake_generate_outputs(
+        config: AnimationConfig,
+        plot_scale: object | None = None,
+    ) -> tuple[Path, Path, object]:
+        observed_configs.append(config)
+        observed_plot_scales.append(plot_scale)
+        return (
+            config.output_dir / "convolucao_animada.mp4",
+            config.output_dir / "comparacao_numerica_analitica.png",
+            object(),
+        )
+
+    monkeypatch.setattr(convolution_animation, "generate_outputs", fake_generate_outputs)
+
+    outputs = generate_all_outputs(AnimationConfig(output_dir=tmp_path))
+
+    assert [config.input_name for config in observed_configs] == list(BATCH_INPUT_NAMES)
+    assert [config.output_dir.name for config in observed_configs] == [
+        "01_unit_impulse",
+        "02_unit_step",
+        "03_unit_ramp",
+        "04_sine_0_7_resonance",
+        "05_sine_0_8_resonance",
+        "06_sine_0_9_resonance",
+        "07_sine_1_0_resonance",
+        "08_sine_1_1_resonance",
+        "09_sine_1_2_resonance",
+        "10_sine_1_3_resonance",
+    ]
+    assert [output.input_name for output in outputs] == list(BATCH_INPUT_NAMES)
+
+
+def test_shared_sine_plot_scale_matches_resonance_sine_case() -> None:
+    config = AnimationConfig(start_time=-1.0, end_time=1.0, dt=0.1)
+    resonance_config = AnimationConfig(
+        start_time=-1.0,
+        end_time=1.0,
+        dt=0.1,
+        input_name=RESONANCE_SINE_INPUT_NAME,
+    )
+    resonance_result = calculate_default_case(resonance_config)
+
+    shared_scale = build_shared_sine_plot_scale(config)
+    resonance_scale = build_plot_scale(resonance_result)
+
+    assert shared_scale == resonance_scale
+
+
+def test_generate_all_outputs_applies_resonance_scale_to_every_sine_case(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    observed_configs: list[AnimationConfig] = []
+    observed_plot_scales: list[object] = []
+
+    def fake_generate_outputs(
+        config: AnimationConfig,
+        plot_scale: object | None = None,
+    ) -> tuple[Path, Path, object]:
+        observed_configs.append(config)
+        observed_plot_scales.append(plot_scale)
+        return (
+            config.output_dir / "convolucao_animada.mp4",
+            config.output_dir / "comparacao_numerica_analitica.png",
+            object(),
+        )
+
+    monkeypatch.setattr(convolution_animation, "generate_outputs", fake_generate_outputs)
+
+    generate_all_outputs(AnimationConfig(output_dir=tmp_path))
+    non_null_sine_scales = [
+        scale
+        for config, scale in zip(observed_configs, observed_plot_scales)
+        if config.input_name in SINE_INPUT_NAMES
+    ]
+    non_sine_scales = [
+        scale
+        for config, scale in zip(observed_configs, observed_plot_scales)
+        if config.input_name not in SINE_INPUT_NAMES
+    ]
+
+    assert len(non_null_sine_scales) == len(SINE_INPUT_NAMES)
+    assert len({id(scale) for scale in non_null_sine_scales}) == 1
+    assert all(scale is None for scale in non_sine_scales)
 
 
 def test_frame_indices_include_first_and_last_sample() -> None:

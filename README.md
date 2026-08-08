@@ -134,6 +134,12 @@ x[indice mais proximo de t = 0] = 1 / dt
 sum(x) * dt = 1
 ```
 
+Na animacao, esse impulso nao e desenhado com amplitude `1/dt`, porque isso
+achata visualmente a resposta ao impulso do sistema. Para fins didaticos, ele e
+representado no painel superior por uma seta vertical em `x = 0`, saindo de
+`y = 0` e apontando para cima em `y = 1`. O calculo numerico continua usando
+o valor `1/dt` para preservar a area unitaria.
+
 As entradas senoidais sao puras, nao causais e de amplitude unitaria:
 
 ```text
@@ -145,6 +151,11 @@ com `multiplier` em:
 ```text
 [0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3]
 ```
+
+Todos os casos senoidais usam a mesma escala vertical nos graficos. A escala
+comum e calculada a partir do caso `sine_1_0_resonance`, que corresponde a
+`1.0 * omega_ref`, ou seja, a frequencia de ressonancia do sistema padrao.
+Isso facilita comparar visualmente as respostas em diferentes frequencias.
 
 ## Funcoes de transferencia disponiveis
 
@@ -161,27 +172,67 @@ O arquivo do sistema padrao e:
 transfer_functions/second_order_underdamped.py
 ```
 
-## Como gerar o MP4
+## Como gerar os MP4s
 
-Caso padrao:
+O comando principal gera todos os casos, nesta ordem:
+
+```text
+1. unit_impulse
+2. unit_step
+3. unit_ramp
+4. sine_0_7_resonance
+5. sine_0_8_resonance
+6. sine_0_9_resonance
+7. sine_1_0_resonance
+8. sine_1_1_resonance
+9. sine_1_2_resonance
+10. sine_1_3_resonance
+```
+
+Para gerar todos:
 
 ```powershell
 python convolution_animation.py
 ```
 
-Escolhendo outra entrada:
+Cada caso e salvo em uma subpasta propria:
+
+```text
+outputs/01_unit_impulse/convolucao_animada.mp4
+outputs/02_unit_step/convolucao_animada.mp4
+outputs/03_unit_ramp/convolucao_animada.mp4
+...
+outputs/10_sine_1_3_resonance/convolucao_animada.mp4
+```
+
+Para gerar apenas uma entrada:
 
 ```powershell
 python convolution_animation.py --input-name unit_ramp
 python convolution_animation.py --input-name sine_1_0_resonance
 ```
 
-Os arquivos gerados ficam em:
+Quando `--input-name` e usado, os arquivos gerados ficam diretamente em:
 
 ```text
 outputs/convolucao_animada.mp4
 outputs/comparacao_numerica_analitica.png
 ```
+
+Para demonstrar a resposta em frequencia no dominio do tempo, use o modo
+sequencial. Cada senoide e convoluida separadamente; a resposta atual e
+revelada progressivamente e as respostas anteriores permanecem sobrepostas:
+
+```powershell
+python convolution_animation.py --sine-sequence
+python convolution_animation.py --sine-sequence --sine-multipliers 0.8,1.0,1.2
+```
+
+Esse modo gera `outputs/convolucao_senoides.mp4` e
+`outputs/comparacao_senoides.png`. A legenda identifica o multiplicador de
+`omega_ref` e a frequencia angular correspondente. A entrada nao e a soma das
+senoides: o processamento individual facilita observar a variacao de ganho,
+fase e proximidade da ressonancia.
 
 ## GitHub
 
@@ -221,7 +272,7 @@ Comandos principais:
 ```powershell
 python -m pytest -q
 python -m compileall convolution_animation.py inputs transfer_functions tests
-python convolution_animation.py
+python convolution_animation.py --input-name unit_step
 ffprobe -v error -select_streams v:0 -count_frames `
   -show_entries stream=codec_name,pix_fmt,width,height,r_frame_rate,nb_read_frames,duration `
   -of default=noprint_wrappers=1 outputs/convolucao_animada.mp4
@@ -230,7 +281,7 @@ ffprobe -v error -select_streams v:0 -count_frames `
 Ultima validacao local registrada:
 
 ```text
-testes = 39 passed
+testes = 45 passed
 erro absoluto maximo = 0.00752794
 RMSE = 0.00143955
 codec = h264
