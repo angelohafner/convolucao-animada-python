@@ -234,6 +234,24 @@ With `dt=0.01 s`, each animation state advances by `0.1 s`.
 Visible labels use the LaTeX notation `$n\\omega_0$`; the Bode panel marks each
 frequency with its corresponding `$n\\omega_0$` value.
 
+For a slower 30 fps render with fewer displayed states and publication-scale
+resolution, use:
+
+```powershell
+python convolution_animation.py `
+  --sine-sequence `
+  --start-time -10 `
+  --end-time 10 `
+  --frame-stride 20 `
+  --fps 30 `
+  --dpi 300 `
+  --output-dir outputs/sequence_final_30fps_dpi300
+```
+
+This configuration produces about 909 animation frames at approximately
+4200 x 3300 pixels. It is intended for high-quality export and can require
+several hours. For normal review, prefer `--dpi 60` or `--dpi 100`.
+
 Esse modo gera `outputs/convolucao_senoides_com_convolucao.mp4` e
 `outputs/comparacao_senoides.png`. A legenda identifica o multiplicador de
 `omega_ref` e a frequencia angular correspondente. A entrada nao e a soma das

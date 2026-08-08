@@ -142,6 +142,11 @@ resposta atual e as respostas anteriores permanecem visiveis.
 The current multi-sine rendering uses `frame_stride=10`, `fps=60`, `dpi=60`,
 and `dt=0.01 s`, so successive displayed states are separated by `0.1 s`.
 Visible frequency labels use the LaTeX notation `$n\\omega_0$`.
+
+An optional high-resolution workflow uses `frame_stride=20`, `fps=30`, and
+`dpi=300` over the `-10 s` to `10 s` window. This creates approximately 909
+frames at roughly `4200 x 3300` pixels and may take several hours. The practical
+review settings are `dpi=60` or `dpi=100`.
 O terceiro painel mostra magnitude e fase teoricas do diagrama de Bode em
 funcao de `omega` (rad/s), com escala logaritmica. Cada senoide processada
 adiciona pontos scatter na frequencia correspondente; ao final, todas as
