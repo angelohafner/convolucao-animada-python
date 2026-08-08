@@ -131,7 +131,7 @@ Para outras entradas, a resposta analitica nao e exibida.
 ## Sequencia de senoides
 
 O modo `--sine-sequence` calcula uma senoide por vez e sobrepoe as respostas no
-painel inferior. A lista padrao e `0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3` vezes
+painel inferior. A lista padrao e `0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8` vezes
 `omega_ref`, podendo ser substituida com `--sine-multipliers`. As senoides nao
 sao somadas entre si; essa escolha permite ao aluno associar cada resposta a
 uma frequencia especifica. Os arquivos gerados sao

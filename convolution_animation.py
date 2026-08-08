@@ -43,6 +43,7 @@ SINE_INPUT_NAMES = (
     "sine_1_3_resonance",
 )
 RESONANCE_SINE_INPUT_NAME = "sine_1_0_resonance"
+DEFAULT_SINE_MULTIPLIERS = (0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8)
 
 
 @dataclass(frozen=True)
@@ -837,7 +838,10 @@ def parse_arguments() -> argparse.Namespace:
     )
     parser.add_argument("--transfer-function-name", default="second_order_underdamped")
     parser.add_argument("--sine-sequence", action="store_true")
-    parser.add_argument("--sine-multipliers", default="0.7,0.8,0.9,1.0,1.1,1.2,1.3")
+    parser.add_argument(
+        "--sine-multipliers",
+        default=",".join(f"{value:g}" for value in DEFAULT_SINE_MULTIPLIERS),
+    )
     parser.add_argument("--start-time", type=float, default=-10.0)
     parser.add_argument("--end-time", type=float, default=20.0)
     parser.add_argument("--dt", type=float, default=1e-2)
