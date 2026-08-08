@@ -477,8 +477,8 @@ def create_sine_sequence_animation(
         config.natural_frequency,
     )
     bode_axis_phase = bode_axis.twinx()
-    bode_axis.semilogx(bode_frequencies, bode_magnitude, color="gray", linewidth=1.5, label="Magnitude teorica")
-    bode_axis_phase.semilogx(bode_frequencies, bode_phase, color="gray", linestyle="--", linewidth=1.3, label="Fase teorica")
+    magnitude_line, = bode_axis.semilogx(bode_frequencies, bode_magnitude, color="gray", linewidth=1.5, label="Magnitude teorica")
+    phase_line, = bode_axis_phase.semilogx(bode_frequencies, bode_phase, color="gray", linestyle="--", linewidth=1.3, label="Fase teorica")
     bode_axis.set_xlabel(r"$\omega$ (rad/s)")
     bode_axis.set_ylabel("Magnitude (dB)")
     bode_axis_phase.set_ylabel("Fase (graus)")
@@ -487,8 +487,10 @@ def create_sine_sequence_animation(
     bode_axis.set_xlim(bode_frequencies[0], bode_frequencies[-1])
     bode_magnitude_points = bode_axis.scatter([], [], s=96, label="Pontos simulados", zorder=4)
     bode_phase_points = bode_axis_phase.scatter([], [], s=96, zorder=4)
-    bode_axis.legend(loc="upper right")
-    bode_axis_phase.legend(loc="upper right")
+    bode_axis.legend(
+        handles=[magnitude_line, phase_line, bode_magnitude_points],
+        loc="upper right",
+    )
     status_text = output_axis.text(0.02, 0.95, "", transform=output_axis.transAxes, verticalalignment="top")
     upper_status = input_axis.text(0.02, 0.95, "", transform=input_axis.transAxes, verticalalignment="top")
     product_fill = None
