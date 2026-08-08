@@ -18,7 +18,7 @@ https://github.com/angelohafner/convolucao-animada-python
 - Para validar o caso padrao isolado, use `--input-name unit_step`.
 - Entrada do caso padrao isolado: `unit_step`, com `x(t) = u(t)`.
 - Sistema: `second_order_underdamped`.
-- Razao de amortecimento: `zeta = 0.2`.
+- Razao de amortecimento: `zeta = 0.1`.
 - Frequencia natural: `wn = 2 rad/s`.
 - Frequencia amortecida: `wd = wn * sqrt(1 - zeta^2)`.
 - Frequencia de referencia usada pelas senoides: `omega_ref = 1.91833261 rad/s`.
@@ -109,7 +109,7 @@ Quando nao existe:
 omega_ref = wn
 ```
 
-Para os parametros atuais, `zeta = 0.2 < 1/sqrt(2)`, portanto o criterio usado
+Para os parametros atuais, `zeta = 0.1 < 1/sqrt(2)`, portanto o criterio usado
 foi a frequencia de ressonancia real, nao o fallback.
 
 ## Metodo numerico

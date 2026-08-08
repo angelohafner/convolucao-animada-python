@@ -50,7 +50,7 @@ class AnimationConfig:
     start_time: float = -10.0
     end_time: float = 20.0
     dt: float = 1e-2
-    damping_ratio: float = 0.2
+    damping_ratio: float = 0.1
     natural_frequency: float = 2.0
     input_name: str = "unit_step"
     transfer_function_name: str = "second_order_underdamped"
@@ -139,7 +139,7 @@ def build_time_axis(config: AnimationConfig) -> FloatArray:
 
 def analytical_step_response(
     time: FloatArray,
-    damping_ratio: float = 0.2,
+    damping_ratio: float = 0.1,
     natural_frequency: float = 2.0,
 ) -> FloatArray:
     damped_frequency = natural_frequency * np.sqrt(1.0 - damping_ratio**2)

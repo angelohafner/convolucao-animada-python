@@ -40,7 +40,7 @@ h(t) = wn / sqrt(1 - zeta^2)
        * u(t)
 
 wd = wn * sqrt(1 - zeta^2)
-zeta = 0.2
+zeta = 0.1
 wn = 2 rad/s
 ```
 
@@ -66,7 +66,7 @@ Nesse caso:
 omega_ref = omega_r = wn * sqrt(1 - 2*zeta^2)
 ```
 
-Com `zeta = 0.2` e `wn = 2 rad/s`, o projeto usa ressonancia real:
+Com `zeta = 0.1` e `wn = 2 rad/s`, o projeto usa ressonancia real:
 
 ```text
 omega_ref = 1.91833261 rad/s
