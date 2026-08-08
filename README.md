@@ -234,7 +234,10 @@ Esse modo gera `outputs/convolucao_senoides_com_convolucao.mp4` e
 senoides: o processamento individual facilita observar a variacao de ganho,
 fase e proximidade da ressonancia. No painel superior sao mostrados a entrada,
  a resposta ao impulso deslocada, o produto e a area da convolucao; no painel
- inferior, a resposta atual e as respostas das senoides anteriores.
+inferior, a resposta atual e as respostas das senoides anteriores.
+O MP4 tambem inclui um terceiro painel com o diagrama de Bode completo. Cada
+senoide acrescenta pontos scatter de magnitude e fase nas suas frequencias, e
+as curvas teoricas permanecem visiveis para comparacao.
 
 ## GitHub
 

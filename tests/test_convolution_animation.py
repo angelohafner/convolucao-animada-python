@@ -28,6 +28,7 @@ from convolution_animation import (
     analytical_step_response,
     build_time_axis,
     calculate_default_case,
+    calculate_bode_response,
     calculate_sine_sequence,
     compute_convolution,
     create_animation,
@@ -131,6 +132,17 @@ def test_parse_sine_multipliers_accepts_comma_separated_values() -> None:
 def test_parse_sine_multipliers_rejects_malformed_values() -> None:
     with pytest.raises(ValueError):
         parse_sine_multipliers("0.8,abc")
+
+
+def test_bode_response_matches_second_order_transfer_function() -> None:
+    frequency = np.array([2.0])
+    magnitude_db, phase_deg = calculate_bode_response(
+        frequency,
+        damping_ratio=0.1,
+        natural_frequency=2.0,
+    )
+    assert magnitude_db[0] == pytest.approx(20.0 * np.log10(1.0 / 0.2), abs=1e-6)
+    assert phase_deg[0] == pytest.approx(-90.0, abs=1e-6)
 
 
 def test_unit_ramp_is_causal() -> None:

@@ -132,6 +132,24 @@ class SineSequenceResult:
     cases: tuple[SineCase, ...]
 
 
+def calculate_bode_response(
+    angular_frequencies: FloatArray,
+    damping_ratio: float,
+    natural_frequency: float,
+) -> tuple[FloatArray, FloatArray]:
+    if np.any(~np.isfinite(angular_frequencies)) or np.any(angular_frequencies <= 0.0):
+        raise ValueError("angular_frequencies must be finite and positive")
+    if natural_frequency <= 0.0:
+        raise ValueError("natural_frequency must be positive")
+    s = 1j * angular_frequencies
+    transfer = natural_frequency**2 / (
+        s**2 + 2.0 * damping_ratio * natural_frequency * s + natural_frequency**2
+    )
+    magnitude_db = 20.0 * np.log10(np.abs(transfer))
+    phase_deg = np.unwrap(np.angle(transfer)) * 180.0 / np.pi
+    return magnitude_db, phase_deg
+
+
 def build_time_axis(config: AnimationConfig) -> FloatArray:
     sample_count = int(round((config.end_time - config.start_time) / config.dt)) + 1
     return np.linspace(config.start_time, config.end_time, sample_count, dtype=float)
@@ -407,8 +425,8 @@ def create_sine_sequence_animation(
     time = sequence.cases[0].result.time
     frame_indices = select_frame_indices(time.size, config.frame_stride)
     colors = plt.get_cmap("viridis")(np.linspace(0.1, 0.9, len(sequence.cases)))
-    figure, (input_axis, output_axis) = plt.subplots(
-        2, 1, figsize=(config.figure_width, config.figure_height), constrained_layout=True
+    figure, (input_axis, output_axis, bode_axis) = plt.subplots(
+        3, 1, figsize=(config.figure_width, config.figure_height + 2.0), constrained_layout=True
     )
     input_line, = input_axis.plot([], [], color=colors[0], linewidth=1.7, label=r"$x(\tau)$")
     shifted_line, = input_axis.plot([], [], color="#D55E00", linewidth=1.5, label=r"$h(t-\tau)$")
@@ -431,6 +449,29 @@ def create_sine_sequence_animation(
     output_axis.set_title("Respostas sobrepostas no dominio do tempo")
     output_axis.grid(True, alpha=0.3)
     output_axis.legend(loc="best")
+    reference_frequency = sequence.cases[0].result.reference_frequency
+    bode_frequencies = np.logspace(
+        np.log10(max(reference_frequency * 0.1, 0.01)),
+        np.log10(reference_frequency * 3.0),
+        300,
+    )
+    bode_magnitude, bode_phase = calculate_bode_response(
+        bode_frequencies,
+        config.damping_ratio,
+        config.natural_frequency,
+    )
+    bode_axis_phase = bode_axis.twinx()
+    bode_axis.semilogx(bode_frequencies, bode_magnitude, color="#444444", linewidth=1.5, label="Magnitude teorica")
+    bode_axis_phase.semilogx(bode_frequencies, bode_phase, color="#999999", linestyle="--", linewidth=1.3, label="Fase teorica")
+    bode_axis.set_xlabel(r"$\omega$ (rad/s)")
+    bode_axis.set_ylabel("Magnitude (dB)")
+    bode_axis_phase.set_ylabel("Fase (graus)")
+    bode_axis.set_title("Diagrama de Bode e pontos das senoides")
+    bode_axis.grid(True, which="both", alpha=0.3)
+    bode_axis.set_xlim(bode_frequencies[0], bode_frequencies[-1])
+    bode_magnitude_points = bode_axis.scatter([], [], s=48, label="Pontos simulados", zorder=4)
+    bode_phase_points = bode_axis_phase.scatter([], [], s=48, zorder=4)
+    bode_axis.legend(loc="best")
     status_text = output_axis.text(0.02, 0.95, "", transform=output_axis.transAxes, verticalalignment="top")
     upper_status = input_axis.text(0.02, 0.95, "", transform=input_axis.transAxes, verticalalignment="top")
     product_fill = None
@@ -470,7 +511,28 @@ def create_sine_sequence_animation(
         upper_status.set_text(
             f"t = {time[time_index]:.2f} s | área = {case.result.output[time_index]:.4f}"
         )
-        return (input_line, shifted_line, product_line, *output_lines, status_text, upper_status, product_fill)
+        completed_cases = sequence.cases[: case_index + 1]
+        point_frequencies = np.array([item.frequency for item in completed_cases])
+        point_magnitudes, point_phases = calculate_bode_response(
+            point_frequencies,
+            config.damping_ratio,
+            config.natural_frequency,
+        )
+        bode_magnitude_points.set_offsets(np.column_stack((point_frequencies, point_magnitudes)))
+        bode_phase_points.set_offsets(np.column_stack((point_frequencies, point_phases)))
+        bode_magnitude_points.set_facecolors(colors[: case_index + 1])
+        bode_phase_points.set_facecolors(colors[: case_index + 1])
+        return (
+            input_line,
+            shifted_line,
+            product_line,
+            *output_lines,
+            status_text,
+            upper_status,
+            product_fill,
+            bode_magnitude_points,
+            bode_phase_points,
+        )
 
     animation = FuncAnimation(
         figure,
