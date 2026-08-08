@@ -410,7 +410,9 @@ def create_sine_sequence_animation(
     figure, (input_axis, output_axis) = plt.subplots(
         2, 1, figsize=(config.figure_width, config.figure_height), constrained_layout=True
     )
-    input_line, = input_axis.plot([], [], color=colors[0], linewidth=1.7)
+    input_line, = input_axis.plot([], [], color=colors[0], linewidth=1.7, label=r"$x(\tau)$")
+    shifted_line, = input_axis.plot([], [], color="#D55E00", linewidth=1.5, label=r"$h(t-\tau)$")
+    product_line, = input_axis.plot([], [], color="#009E73", linewidth=1.2, label=r"$x(\tau)h(t-\tau)$")
     output_lines = [
         output_axis.plot([], [], color=color, linewidth=2.0, label=f"{case.multiplier:.2f} omega_ref")[0]
         for color, case in zip(colors, sequence.cases)
@@ -419,8 +421,9 @@ def create_sine_sequence_animation(
     input_axis.set_ylim(*_axis_limits(*(case.result.input_signal for case in sequence.cases)))
     input_axis.set_xlabel(r"$t$ (s)")
     input_axis.set_ylabel("Amplitude")
-    input_axis.set_title("Senoide atual")
+    input_axis.set_title("Construção da convolução da senoide atual")
     input_axis.grid(True, alpha=0.3)
+    input_axis.legend(loc="upper right")
     output_axis.set_xlim(time[0], time[-1])
     output_axis.set_ylim(*_axis_limits(*(case.result.output for case in sequence.cases)))
     output_axis.set_xlabel(r"$t$ (s)")
@@ -429,14 +432,30 @@ def create_sine_sequence_animation(
     output_axis.grid(True, alpha=0.3)
     output_axis.legend(loc="best")
     status_text = output_axis.text(0.02, 0.95, "", transform=output_axis.transAxes, verticalalignment="top")
+    upper_status = input_axis.text(0.02, 0.95, "", transform=input_axis.transAxes, verticalalignment="top")
+    product_fill = None
     frames_per_case = len(frame_indices)
 
     def update(frame: int) -> tuple[object, ...]:
         case_index = min(frame // frames_per_case, len(sequence.cases) - 1)
         time_index = frame_indices[frame % frames_per_case]
         case = sequence.cases[case_index]
+        nonlocal product_fill
         input_line.set_color(colors[case_index])
         input_line.set_data(time, case.result.input_signal)
+        shifted_response = case.result.impulse_response
+        transfer_definition = get_transfer_function_definition(config.transfer_function_name)
+        shifted_response = transfer_definition.impulse_function(
+            time[time_index] - time,
+            config.damping_ratio,
+            config.natural_frequency,
+        )
+        product = case.result.input_signal * shifted_response
+        shifted_line.set_data(time, shifted_response)
+        product_line.set_data(time, product)
+        if product_fill is not None:
+            product_fill.remove()
+        product_fill = input_axis.fill_between(time, 0.0, product, color="#009E73", alpha=0.25)
         for index, line in enumerate(output_lines):
             if index < case_index:
                 line.set_data(time, sequence.cases[index].result.output)
@@ -448,7 +467,10 @@ def create_sine_sequence_animation(
             f"Senoide {case_index + 1}/{len(sequence.cases)}: "
             f"{case.multiplier:.2f} omega_ref | t = {time[time_index]:.2f} s"
         )
-        return (input_line, *output_lines, status_text)
+        upper_status.set_text(
+            f"t = {time[time_index]:.2f} s | área = {case.result.output[time_index]:.4f}"
+        )
+        return (input_line, shifted_line, product_line, *output_lines, status_text, upper_status, product_fill)
 
     animation = FuncAnimation(
         figure,
@@ -476,7 +498,7 @@ def generate_sine_sequence(
     mp4_path = create_sine_sequence_animation(
         sequence,
         config,
-        config.output_dir / "convolucao_senoides.mp4",
+        config.output_dir / "convolucao_senoides_com_convolucao.mp4",
     )
     return mp4_path, png_path, sequence
 

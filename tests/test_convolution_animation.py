@@ -120,6 +120,7 @@ def test_sine_sequence_generates_overlay_outputs(tmp_path: Path) -> None:
     mp4_path, png_path, sequence = generate_sine_sequence(config, (0.8, 1.0))
     assert len(sequence.cases) == 2
     assert mp4_path.exists() and mp4_path.stat().st_size > 0
+    assert mp4_path.name == "convolucao_senoides_com_convolucao.mp4"
     assert png_path.exists() and png_path.stat().st_size > 0
 
 

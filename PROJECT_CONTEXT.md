@@ -135,7 +135,10 @@ painel inferior. A lista padrao e `0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3` vezes
 `omega_ref`, podendo ser substituida com `--sine-multipliers`. As senoides nao
 sao somadas entre si; essa escolha permite ao aluno associar cada resposta a
 uma frequencia especifica. Os arquivos gerados sao
-`outputs/convolucao_senoides.mp4` e `outputs/comparacao_senoides.png`.
+`outputs/convolucao_senoides_com_convolucao.mp4` e
+`outputs/comparacao_senoides.png`. No painel superior, a animacao mostra
+`x(tau)`, `h(t-tau)`, o produto e a area integrada; no painel inferior, a
+resposta atual e as respostas anteriores permanecem visiveis.
 
 ## Artefatos gerados
 

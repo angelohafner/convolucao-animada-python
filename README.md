@@ -228,11 +228,13 @@ python convolution_animation.py --sine-sequence
 python convolution_animation.py --sine-sequence --sine-multipliers 0.8,1.0,1.2
 ```
 
-Esse modo gera `outputs/convolucao_senoides.mp4` e
+Esse modo gera `outputs/convolucao_senoides_com_convolucao.mp4` e
 `outputs/comparacao_senoides.png`. A legenda identifica o multiplicador de
 `omega_ref` e a frequencia angular correspondente. A entrada nao e a soma das
 senoides: o processamento individual facilita observar a variacao de ganho,
-fase e proximidade da ressonancia.
+fase e proximidade da ressonancia. No painel superior sao mostrados a entrada,
+ a resposta ao impulso deslocada, o produto e a area da convolucao; no painel
+ inferior, a resposta atual e as respostas das senoides anteriores.
 
 ## GitHub
 
