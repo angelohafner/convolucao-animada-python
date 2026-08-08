@@ -55,8 +55,8 @@ class AnimationConfig:
     natural_frequency: float = 2.0
     input_name: str = "unit_step"
     transfer_function_name: str = "second_order_underdamped"
-    frame_stride: int = 20
-    fps: int = 25
+    frame_stride: int = 10
+    fps: int = 60
     figure_width: float = 14.0
     figure_height: float = 9.0
     dpi: int = 100
@@ -396,7 +396,7 @@ def save_comparison_figure(
     axis.set_title("Comparação entre convolução numérica e resposta analítica")
     axis.set_ylim(*active_plot_scale.output_y_limits)
     axis.grid(True, alpha=0.3)
-    axis.legend(loc="best")
+    axis.legend(loc="upper right")
     figure.savefig(output_path, dpi=150)
     plt.close(figure)
     return output_path
@@ -418,11 +418,11 @@ def save_sine_sequence_figure(
             case.result.output,
             color=color,
             linewidth=1.7,
-            label=f"{case.multiplier:.2f} omega_ref ({case.frequency:.3f} rad/s)",
+            label=rf"${case.multiplier:.2f}\omega_0$ ({case.frequency:.3f} rad/s)",
         )
     axis.set_xlabel(r"$t$ (s)")
     axis.set_ylabel("Amplitude")
-    axis.set_title("Respostas no dominio do tempo para varias frequencias")
+    axis.set_title("Time-domain responses for multiple frequencies")
     axis.grid(True, alpha=0.3)
     axis.legend(loc="upper right")
     figure.savefig(output_path, dpi=150)
@@ -448,21 +448,21 @@ def create_sine_sequence_animation(
     shifted_line, = input_axis.plot([], [], color="#D55E00", linewidth=1.5, label=r"$h(t-\tau)$")
     product_line, = input_axis.plot([], [], color="#009E73", linewidth=1.2, label=r"$x(\tau)h(t-\tau)$")
     output_lines = [
-        output_axis.plot([], [], color=color, linewidth=2.0, label=f"{case.multiplier:.2f} omega_ref")[0]
+        output_axis.plot([], [], color=color, linewidth=2.0, label=rf"${case.multiplier:.2f}\omega_0$")[0]
         for color, case in zip(colors, sequence.cases)
     ]
     input_axis.set_xlim(time[0], time[-1])
     input_axis.set_ylim(*_axis_limits(*(case.result.input_signal for case in sequence.cases)))
     input_axis.set_xlabel(r"$t$ (s)")
     input_axis.set_ylabel("Amplitude")
-    input_axis.set_title("Construção da convolução da senoide atual")
+    input_axis.set_title(r"Convolution construction for current input $x(\tau)$")
     input_axis.grid(True, alpha=0.3)
     input_axis.legend(loc="upper right")
     output_axis.set_xlim(time[0], time[-1])
     output_axis.set_ylim(*_axis_limits(*(case.result.output for case in sequence.cases)))
     output_axis.set_xlabel(r"$t$ (s)")
     output_axis.set_ylabel("Amplitude")
-    output_axis.set_title("Respostas sobrepostas no dominio do tempo")
+    output_axis.set_title("Overlaid time-domain responses")
     output_axis.grid(True, alpha=0.3)
     output_axis.legend(loc="upper right")
     reference_frequency = sequence.cases[0].result.reference_frequency
@@ -477,15 +477,15 @@ def create_sine_sequence_animation(
         config.natural_frequency,
     )
     bode_axis_phase = bode_axis.twinx()
-    magnitude_line, = bode_axis.semilogx(bode_frequencies, bode_magnitude, color="gray", linewidth=1.5, label="Magnitude teorica")
-    phase_line, = bode_axis_phase.semilogx(bode_frequencies, bode_phase, color="gray", linestyle="--", linewidth=1.3, label="Fase teorica")
+    magnitude_line, = bode_axis.semilogx(bode_frequencies, bode_magnitude, color="gray", linewidth=1.5, label="Theoretical magnitude")
+    phase_line, = bode_axis_phase.semilogx(bode_frequencies, bode_phase, color="gray", linestyle="--", linewidth=1.3, label="Theoretical phase")
     bode_axis.set_xlabel(r"$\omega$ (rad/s)")
     bode_axis.set_ylabel("Magnitude (dB)")
-    bode_axis_phase.set_ylabel("Fase (graus)")
-    bode_axis.set_title("Diagrama de Bode e pontos das senoides")
+    bode_axis_phase.set_ylabel("Phase (degrees)")
+    bode_axis.set_title(r"Bode diagram and $n\omega_0$ markers")
     bode_axis.grid(True, which="both", alpha=0.3)
     bode_axis.set_xlim(bode_frequencies[0], bode_frequencies[-1])
-    bode_magnitude_points = bode_axis.scatter([], [], s=96, label="Pontos simulados", zorder=4)
+    bode_magnitude_points = bode_axis.scatter([], [], s=96, label=r"$n\omega_0$ markers", zorder=4)
     bode_phase_points = bode_axis_phase.scatter([], [], s=96, zorder=4)
     bode_axis.legend(
         handles=[magnitude_line, phase_line, bode_magnitude_points],
@@ -524,11 +524,11 @@ def create_sine_sequence_animation(
             else:
                 line.set_data([], [])
         status_text.set_text(
-            f"Senoide {case_index + 1}/{len(sequence.cases)}: "
-            f"{case.multiplier:.2f} omega_ref | t = {time[time_index]:.2f} s"
+            rf"Input {case_index + 1}/{len(sequence.cases)}: "
+            rf"{case.multiplier:.2f}\omega_0 | t = {time[time_index]:.2f} s"
         )
         upper_status.set_text(
-            f"t = {time[time_index]:.2f} s | área = {case.result.output[time_index]:.4f}"
+            f"t = {time[time_index]:.2f} s | convolution area = {case.result.output[time_index]:.4f}"
         )
         completed_cases = sequence.cases[: case_index + 1]
         point_frequencies = np.array([item.frequency for item in completed_cases])
@@ -558,7 +558,7 @@ def create_sine_sequence_animation(
         update,
         frames=range(len(sequence.cases) * frames_per_case),
         interval=1000.0 / config.fps,
-        blit=False,
+        blit=True,
         repeat=False,
     )
     writer = FFMpegWriter(fps=config.fps, codec="libx264", extra_args=["-pix_fmt", "yuv420p"])
@@ -861,9 +861,11 @@ def parse_arguments() -> argparse.Namespace:
         default=",".join(f"{value:g}" for value in DEFAULT_SINE_MULTIPLIERS),
     )
     parser.add_argument("--start-time", type=float, default=-10.0)
-    parser.add_argument("--end-time", type=float, default=20.0)
+    parser.add_argument("--end-time", type=float, default=10.0)
     parser.add_argument("--dt", type=float, default=1e-2)
-    parser.add_argument("--frame-stride", type=int, default=20)
+    parser.add_argument("--frame-stride", type=int, default=10)
+    parser.add_argument("--fps", type=int, default=60)
+    parser.add_argument("--dpi", type=int, default=60)
     parser.add_argument("--output-dir", type=Path, default=Path("outputs"))
     return parser.parse_args()
 
@@ -891,6 +893,8 @@ def main() -> None:
         end_time=arguments.end_time,
         dt=arguments.dt,
         frame_stride=arguments.frame_stride,
+        fps=arguments.fps,
+        dpi=arguments.dpi,
         output_dir=arguments.output_dir,
     )
     if arguments.sine_sequence:

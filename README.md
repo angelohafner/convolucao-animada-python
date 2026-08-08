@@ -228,6 +228,12 @@ python convolution_animation.py --sine-sequence
 python convolution_animation.py --sine-sequence --sine-multipliers 0.8,1.0,1.2
 ```
 
+The multi-sine animation uses `frame_stride=10`, renders at `60 fps`, and uses
+`dpi=60` in the CLI workflow to keep the high-frame-count render practical.
+With `dt=0.01 s`, each animation state advances by `0.1 s`.
+Visible labels use the LaTeX notation `$n\\omega_0$`; the Bode panel marks each
+frequency with its corresponding `$n\\omega_0$` value.
+
 Esse modo gera `outputs/convolucao_senoides_com_convolucao.mp4` e
 `outputs/comparacao_senoides.png`. A legenda identifica o multiplicador de
 `omega_ref` e a frequencia angular correspondente. A entrada nao e a soma das

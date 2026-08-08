@@ -139,6 +139,9 @@ uma frequencia especifica. Os arquivos gerados sao
 `outputs/comparacao_senoides.png`. No painel superior, a animacao mostra
 `x(tau)`, `h(t-tau)`, o produto e a area integrada; no painel inferior, a
 resposta atual e as respostas anteriores permanecem visiveis.
+The current multi-sine rendering uses `frame_stride=10`, `fps=60`, `dpi=60`,
+and `dt=0.01 s`, so successive displayed states are separated by `0.1 s`.
+Visible frequency labels use the LaTeX notation `$n\\omega_0$`.
 O terceiro painel mostra magnitude e fase teoricas do diagrama de Bode em
 funcao de `omega` (rad/s), com escala logaritmica. Cada senoide processada
 adiciona pontos scatter na frequencia correspondente; ao final, todas as
