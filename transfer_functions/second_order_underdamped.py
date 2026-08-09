@@ -18,7 +18,7 @@ class FrequencyReference:
 
 def impulse_function(
     time: FloatArray,
-    damping_ratio: float = 0.2,
+    damping_ratio: float = 0.1,
     natural_frequency: float = 2.0,
 ) -> FloatArray:
     # H(s) = wn^2 / (s^2 + 2*zeta*wn*s + wn^2)
@@ -36,7 +36,7 @@ def impulse_function(
 
 
 def resonance_frequency(
-    damping_ratio: float = 0.2,
+    damping_ratio: float = 0.1,
     natural_frequency: float = 2.0,
 ) -> float | None:
     if damping_ratio < 1.0 / np.sqrt(2.0):
@@ -45,7 +45,7 @@ def resonance_frequency(
 
 
 def reference_frequency(
-    damping_ratio: float = 0.2,
+    damping_ratio: float = 0.1,
     natural_frequency: float = 2.0,
 ) -> FrequencyReference:
     resonance = resonance_frequency(damping_ratio, natural_frequency)
