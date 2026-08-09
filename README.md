@@ -12,10 +12,10 @@ https://github.com/angelohafner/convolucao-animada-python
 
 ## Objetivo
 
-O caso padrao continua sendo um degrau unitario aplicado a um sistema de segunda
-ordem subamortecido. O projeto agora tambem possui uma biblioteca modular de
-entradas, com um arquivo por sinal, e uma biblioteca de funcoes de transferencia,
-com um arquivo por sistema.
+The default single-input case is a unit step applied to a second-order
+underdamped system. The project also includes modular input and transfer-
+function registries, plus a multi-sine workflow for time-domain frequency-
+response demonstrations.
 
 ## Modelo matematico padrao
 
@@ -265,6 +265,10 @@ as curvas teoricas permanecem visiveis para comparacao. As cores usam o
 colormap `jet` proporcional a frequencia e sao compartilhadas entre entrada,
 resposta temporal e pontos do Bode. As curvas teoricas do Bode sao cinza e os
 marcadores scatter usam tamanho 96.
+
+The current default multi-sine case uses `zeta=0.1`, the multipliers
+`[0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8]`, and a time window from
+`-10 s` to `10 s`.
 
 ## GitHub
 
