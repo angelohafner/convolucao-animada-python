@@ -1,37 +1,43 @@
-# Convolucao animada em Python
+# Animated Convolution in Python
 
-Projeto Python para gerar um MP4 didatico de convolucao. A animacao mostra
-`x(tau)`, o deslocamento de `h(t - tau)`, o produto `x(tau) * h(t - tau)` e a
-construcao progressiva de `y(t)`.
+A Python project for generating educational MP4 animations of continuous-time
+convolution. The animation shows the input signal, the shifted impulse response,
+their product, the signed integration area, and the progressive construction of
+the output signal.
 
-Repositorio publico:
+Public repository: [angelohafner/convolucao-animada-python](https://github.com/angelohafner/convolucao-animada-python)
 
-```text
-https://github.com/angelohafner/convolucao-animada-python
-```
+## Purpose
 
-## Objetivo
+The project provides a visual and reproducible way to study:
 
-The default single-input case is a unit step applied to a second-order
-underdamped system. The project also includes modular input and transfer-
-function registries, plus a multi-sine workflow for time-domain frequency-
-response demonstrations.
+- convolution in the time domain;
+- impulse, step, and ramp responses;
+- sinusoidal steady-state behavior;
+- the relationship between time-domain responses and frequency response;
+- Bode magnitude and phase diagrams.
 
-## Modelo matematico padrao
+The default system is a second-order underdamped system. Input signals and
+transfer functions are organized in independent registries so the project can
+be extended without mixing signal definitions, numerical calculations, and
+animation logic.
 
-Entrada padrao:
+## Mathematical model
 
-```text
-x(t) = u(t)
-```
-
-Funcao de transferencia padrao:
+The default transfer function is
 
 ```text
 H(s) = wn^2 / (s^2 + 2*zeta*wn*s + wn^2)
 ```
 
-Resposta ao impulso usada na convolucao:
+with the current parameters
+
+```text
+zeta = 0.1
+wn = 2 rad/s
+```
+
+Its impulse response is
 
 ```text
 h(t) = wn / sqrt(1 - zeta^2)
@@ -40,79 +46,81 @@ h(t) = wn / sqrt(1 - zeta^2)
        * u(t)
 
 wd = wn * sqrt(1 - zeta^2)
-zeta = 0.1
-wn = 2 rad/s
 ```
 
-A convolucao continua e aproximada numericamente por:
+Continuous convolution is approximated numerically as
 
 ```text
 y(t) = integral x(tau) * h(t - tau) d(tau)
 y_num = convolve(x, h) * dt
 ```
 
-## Frequencia de referencia
+The default numerical time step is
 
-Para o sistema de segunda ordem padrao, a frequencia de ressonancia existe
-quando:
+```text
+dt = 0.01 s
+```
+
+## Reference frequency
+
+For the default second-order system, a resonance frequency exists when
 
 ```text
 zeta < 1 / sqrt(2)
 ```
 
-Nesse caso:
+The reference frequency is then
 
 ```text
-omega_ref = omega_r = wn * sqrt(1 - 2*zeta^2)
+omega_0 = omega_r = wn * sqrt(1 - 2*zeta^2)
 ```
 
-Com `zeta = 0.1` e `wn = 2 rad/s`, o projeto usa ressonancia real:
+For `zeta=0.1` and `wn=2 rad/s`:
 
 ```text
-omega_ref = 1.91833261 rad/s
+omega_0 = 1.97989899 rad/s
 ```
 
-Se um sistema futuro nao tiver frequencia de ressonancia, o criterio alternativo
-documentado e:
+If a future system has no resonance peak, the natural frequency is used as the
+fallback reference:
 
 ```text
-omega_ref = wn
+omega_0 = wn
 ```
 
-## Estrutura do projeto
+## Project structure
 
 ```text
 D:/convolucao/
-├── convolution_animation.py
-├── .gitignore
-├── inputs/
-│   ├── unit_step.py
-│   ├── unit_impulse.py
-│   ├── unit_ramp.py
-│   ├── sine_0_7_resonance.py
-│   ├── sine_0_8_resonance.py
-│   ├── sine_0_9_resonance.py
-│   ├── sine_1_0_resonance.py
-│   ├── sine_1_1_resonance.py
-│   ├── sine_1_2_resonance.py
-│   ├── sine_1_3_resonance.py
-│   ├── sine_common.py
-│   └── registry.py
-├── transfer_functions/
-│   ├── second_order_underdamped.py
-│   └── registry.py
-├── tests/
-│   └── test_convolution_animation.py
-├── outputs/
-├── README.md
-├── PROJECT_CONTEXT.md
-└── requirements.txt
+|-- convolution_animation.py
+|-- inputs/
+|   |-- unit_step.py
+|   |-- unit_impulse.py
+|   |-- unit_ramp.py
+|   |-- sine_common.py
+|   |-- sine_0_7_resonance.py
+|   |-- sine_0_8_resonance.py
+|   |-- sine_0_9_resonance.py
+|   |-- sine_1_0_resonance.py
+|   |-- sine_1_1_resonance.py
+|   |-- sine_1_2_resonance.py
+|   |-- sine_1_3_resonance.py
+|   `-- registry.py
+|-- transfer_functions/
+|   |-- second_order_underdamped.py
+|   `-- registry.py
+|-- tests/
+|   `-- test_convolution_animation.py
+|-- outputs/
+|-- docs/
+|-- PROJECT_CONTEXT.md
+|-- requirements.txt
+`-- README.md
 ```
 
-## Entradas disponiveis
+## Available input signals
 
-Use estes nomes em `AnimationConfig(input_name=...)` ou no argumento
-`--input-name`:
+Use these names with `AnimationConfig(input_name=...)` or `--input-name`:
 
 ```text
 unit_step
@@ -127,115 +135,177 @@ sine_1_2_resonance
 sine_1_3_resonance
 ```
 
-O impulso unitario e numerico. O criterio usado e:
+### Numerical unit impulse
+
+The unit impulse is represented by one numerical sample at the index closest
+to `t=0`:
 
 ```text
-x[indice mais proximo de t = 0] = 1 / dt
+x[k0] = 1 / dt
 sum(x) * dt = 1
 ```
 
-Na animacao, esse impulso nao e desenhado com amplitude `1/dt`, porque isso
-achata visualmente a resposta ao impulso do sistema. Para fins didaticos, ele e
-representado no painel superior por uma seta vertical em `x = 0`, saindo de
-`y = 0` e apontando para cima em `y = 1`. O calculo numerico continua usando
-o valor `1/dt` para preservar a area unitaria.
+For `dt=0.01 s`, the sample amplitude is `100`, preserving unit area. In the
+animation, the impulse is drawn as a unit-height arrow so the system impulse
+response remains readable. This visual convention does not change the numerical
+calculation.
 
-As entradas senoidais sao puras, nao causais e de amplitude unitaria:
+### Sinusoidal inputs
 
-```text
-x(t) = sin(multiplier * omega_ref * t)
-```
-
-com `multiplier` em:
+The individual sinusoidal inputs are pure, noncausal, unit-amplitude signals:
 
 ```text
-[0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8]
+x(t) = sin(n * omega_0 * t)
 ```
 
-Todos os casos senoidais usam a mesma escala vertical nos graficos. A escala
-comum e calculada a partir do caso `sine_1_0_resonance`, que corresponde a
-`1.0 * omega_ref`, ou seja, a frequencia de ressonancia do sistema padrao.
-Isso facilita comparar visualmente as respostas em diferentes frequencias.
+The default multi-sine sequence uses
 
-## Funcoes de transferencia disponiveis
+```text
+n = [0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8]
+```
 
-Use estes nomes em `AnimationConfig(transfer_function_name=...)` ou no argumento
+Each sine wave is processed independently. The signals are not summed into one
+input. This makes it possible to associate each time-domain response with a
+specific point on the frequency-response diagram.
+
+## Available transfer functions
+
+Use the following name with `AnimationConfig(transfer_function_name=...)` or
 `--transfer-function-name`:
 
 ```text
 second_order_underdamped
 ```
 
-O arquivo do sistema padrao e:
+The implementation is located in
+`transfer_functions/second_order_underdamped.py`.
 
-```text
-transfer_functions/second_order_underdamped.py
+## Installation
+
+Create and activate a virtual environment if desired, then install the Python
+dependencies:
+
+```powershell
+cd D:\convolucao
+python -m pip install -r requirements.txt
 ```
 
-## Como gerar os MP4s
+FFmpeg must also be installed and available on `PATH`:
 
-O comando principal gera todos os casos, nesta ordem:
-
-```text
-1. unit_impulse
-2. unit_step
-3. unit_ramp
-4. sine_0_7_resonance
-5. sine_0_8_resonance
-6. sine_0_9_resonance
-7. sine_1_0_resonance
-8. sine_1_1_resonance
-9. sine_1_2_resonance
-10. sine_1_3_resonance
+```powershell
+ffmpeg -version
+ffprobe -version
 ```
 
-Para gerar todos:
+## Generating animations
+
+### Generate all registered single-input cases
 
 ```powershell
 python convolution_animation.py
 ```
 
-Cada caso e salvo em uma subpasta propria:
+The batch workflow generates impulse, step, ramp, and registered sine cases in
+numbered subdirectories under `outputs/`.
 
-```text
-outputs/01_unit_impulse/convolucao_animada.mp4
-outputs/02_unit_step/convolucao_animada.mp4
-outputs/03_unit_ramp/convolucao_animada.mp4
-...
-outputs/10_sine_1_3_resonance/convolucao_animada.mp4
+### Generate one input case
+
+Unit impulse:
+
+```powershell
+python convolution_animation.py --input-name unit_impulse
 ```
 
-Para gerar apenas uma entrada:
+Unit step:
+
+```powershell
+python convolution_animation.py --input-name unit_step
+```
+
+Unit ramp:
 
 ```powershell
 python convolution_animation.py --input-name unit_ramp
-python convolution_animation.py --input-name sine_1_0_resonance
 ```
 
-Quando `--input-name` e usado, os arquivos gerados ficam diretamente em:
+Single-input outputs are written to
 
 ```text
 outputs/convolucao_animada.mp4
 outputs/comparacao_numerica_analitica.png
 ```
 
-Para demonstrar a resposta em frequencia no dominio do tempo, use o modo
-sequencial. Cada senoide e convoluida separadamente; a resposta atual e
-revelada progressivamente e as respostas anteriores permanecem sobrepostas:
+### High-resolution impulse animation
+
+```powershell
+python convolution_animation.py `
+  --input-name unit_impulse `
+  --start-time -10 `
+  --end-time 10 `
+  --dt 0.005 `
+  --frame-stride 10 `
+  --fps 60 `
+  --dpi 300 `
+  --output-dir outputs/unit_impulse_dt005_60fps_dpi300
+```
+
+This configuration is computationally expensive because it combines a small
+time step, many animation frames, 60 fps, and publication-scale resolution.
+
+## Multi-sine frequency-response animation
+
+Run the default sequence with
 
 ```powershell
 python convolution_animation.py --sine-sequence
-python convolution_animation.py --sine-sequence --sine-multipliers 0.8,1.0,1.2
 ```
 
-The multi-sine animation uses `frame_stride=10`, renders at `60 fps`, and uses
-`dpi=60` in the CLI workflow to keep the high-frame-count render practical.
-With `dt=0.01 s`, each animation state advances by `0.1 s`.
-Visible labels use the LaTeX notation `$n\\omega_0$`; the Bode panel marks each
-frequency with its corresponding `$n\\omega_0$` value.
+Use custom frequency multipliers with
 
-For a slower 30 fps render with fewer displayed states and publication-scale
-resolution, use:
+```powershell
+python convolution_animation.py `
+  --sine-sequence `
+  --sine-multipliers 0.4,0.8,1.0,1.2,1.6
+```
+
+The animation contains three panels:
+
+1. convolution construction using `x(tau)`, `h(t-tau)`, their product, and the
+   signed integration area;
+2. overlaid time-domain responses, preserving responses from previous sine
+   waves;
+3. theoretical Bode magnitude and phase curves with colored markers at each
+   simulated frequency.
+
+The interface uses English labels and LaTeX notation such as `$n\omega_0$`.
+Sine colors are assigned with the `jet` colormap according to frequency and are
+kept consistent across the input, output, and Bode markers. The theoretical
+transfer-function curves are gray.
+
+The sequence generates
+
+```text
+outputs/convolucao_senoides_com_convolucao.mp4
+outputs/comparacao_senoides.png
+```
+
+### Default render settings
+
+The CLI defaults for the multi-sine workflow are
+
+```text
+start_time = -10 s
+end_time = 10 s
+dt = 0.01 s
+frame_stride = 10
+fps = 60
+dpi = 60
+```
+
+With `dt=0.01 s` and `frame_stride=10`, consecutive animation states are
+separated by `0.1 s` of simulated time.
+
+### High-resolution multi-sine render
 
 ```powershell
 python convolution_animation.py `
@@ -248,90 +318,66 @@ python convolution_animation.py `
   --output-dir outputs/sequence_final_30fps_dpi300
 ```
 
-This configuration produces about 909 animation frames at approximately
-4200 x 3300 pixels. It is intended for high-quality export and can require
-several hours. For normal review, prefer `--dpi 60` or `--dpi 100`.
+This configuration produces approximately 909 animation frames at about
+`4200 x 3300` pixels and may require several hours. For normal review, use
+`--dpi 60` or `--dpi 100`.
 
-Esse modo gera `outputs/convolucao_senoides_com_convolucao.mp4` e
-`outputs/comparacao_senoides.png`. A legenda identifica o multiplicador de
-`omega_ref` e a frequencia angular correspondente. A entrada nao e a soma das
-senoides: o processamento individual facilita observar a variacao de ganho,
-fase e proximidade da ressonancia. No painel superior sao mostrados a entrada,
- a resposta ao impulso deslocada, o produto e a area da convolucao; no painel
-inferior, a resposta atual e as respostas das senoides anteriores.
-O MP4 tambem inclui um terceiro painel com o diagrama de Bode completo. Cada
-senoide acrescenta pontos scatter de magnitude e fase nas suas frequencias, e
-as curvas teoricas permanecem visiveis para comparacao. As cores usam o
-colormap `jet` proporcional a frequencia e sao compartilhadas entre entrada,
-resposta temporal e pontos do Bode. As curvas teoricas do Bode sao cinza e os
-marcadores scatter usam tamanho 96.
+## Validation
 
-The current default multi-sine case uses `zeta=0.1`, the multipliers
-`[0.2, 0.4, 0.6, 0.8, 1.0, 1.2, 1.4, 1.6, 1.8]`, and a time window from
-`-10 s` to `10 s`.
-
-## GitHub
-
-O projeto esta publicado como repositorio publico em:
-
-```text
-https://github.com/angelohafner/convolucao-animada-python
-```
-
-O branch principal e `main`.
-
-## Como adicionar uma nova entrada
-
-1. Crie um novo arquivo em `inputs/`, por exemplo `inputs/my_signal.py`.
-2. Implemente:
-
-```python
-def input_function(time: FloatArray, dt: float, reference_frequency: float) -> FloatArray:
-    ...
-```
-
-3. Registre a entrada em `inputs/registry.py`.
-4. Adicione ou ajuste testes em `tests/test_convolution_animation.py`.
-
-## Como adicionar uma nova funcao de transferencia
-
-1. Crie um novo arquivo em `transfer_functions/`.
-2. Implemente a resposta ao impulso.
-3. Implemente o criterio de frequencia de referencia.
-4. Registre o sistema em `transfer_functions/registry.py`.
-5. Documente se existe ressonancia real ou se sera usado o fallback.
-
-## Validacao
-
-Comandos principais:
+Run the automated tests and compile checks with
 
 ```powershell
 python -m pytest -q
 python -m compileall convolution_animation.py inputs transfer_functions tests
-python convolution_animation.py --input-name unit_step
+```
+
+Inspect a generated MP4 with
+
+```powershell
 ffprobe -v error -select_streams v:0 -count_frames `
   -show_entries stream=codec_name,pix_fmt,width,height,r_frame_rate,nb_read_frames,duration `
   -of default=noprint_wrappers=1 outputs/convolucao_animada.mp4
 ```
 
-Ultima validacao local registrada:
+The most recent automated test run recorded `55 passed`.
 
-```text
-testes = 45 passed
-erro absoluto maximo = 0.00752794
-RMSE = 0.00143955
-codec = h264
-resolucao = 1400 x 900
-fps = 25/1
-quadros = 152
-duracao = 6.080000 s
+## Adding an input signal
+
+1. Create a module in `inputs/`, for example `inputs/my_signal.py`.
+2. Implement the expected factory function:
+
+```python
+def input_function(
+    time: FloatArray,
+    dt: float,
+    reference_frequency: float,
+) -> FloatArray:
+    ...
 ```
 
-## Limitacoes
+3. Register it in `inputs/registry.py`.
+4. Add tests in `tests/test_convolution_animation.py`.
+5. Document the signal definition and units.
 
-- A resposta analitica implementada vale somente para o caso padrao:
-  `unit_step` com `second_order_underdamped`.
-- Para outras entradas, o MP4 e a convolucao numerica sao gerados normalmente,
-  mas a curva analitica nao e exibida.
-- A aproximacao do impulso depende de `dt`.
-- O FFmpeg precisa estar instalado e disponivel no `PATH`.
+## Adding a transfer function
+
+1. Create a module in `transfer_functions/`.
+2. Implement its impulse response.
+3. Implement its reference-frequency criterion.
+4. Register it in `transfer_functions/registry.py`.
+5. Add numerical tests and document assumptions, units, and limitations.
+
+## Limitations
+
+- The analytical reference currently applies only to the unit-step response of
+  `second_order_underdamped`.
+- Other inputs use numerical convolution without an analytical overlay.
+- The numerical impulse approximation depends on `dt`.
+- High DPI, small `dt`, and small `frame_stride` values can make rendering take
+  several hours.
+- FFmpeg must be installed and accessible from the command line.
+
+## License and contribution
+
+Contributions, validation cases, and documentation improvements are welcome.
+Open an issue or pull request in the public GitHub repository.
